@@ -1,0 +1,3 @@
+package com.example.cloudfilestorage.repository;
+import com.example.cloudfilestorage.model.StoredFile; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*;
+public interface StoredFileRepository extends JpaRepository<StoredFile,Long>{List<StoredFile> findByOwnerUsernameOrderByUploadedAtDesc(String username);Optional<StoredFile> findByIdAndOwnerUsername(Long id,String username);}

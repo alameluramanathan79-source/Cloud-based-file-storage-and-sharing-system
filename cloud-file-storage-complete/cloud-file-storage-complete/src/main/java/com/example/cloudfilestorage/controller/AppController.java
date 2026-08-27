@@ -1,0 +1,15 @@
+package com.example.cloudfilestorage.controller;
+import com.example.cloudfilestorage.model.User; import com.example.cloudfilestorage.model.StoredFile; import com.example.cloudfilestorage.repository.UserRepository; import com.example.cloudfilestorage.repository.StoredFileRepository; import com.example.cloudfilestorage.service.FileService;
+import org.springframework.stereotype.Controller; import org.springframework.ui.Model; import org.springframework.web.bind.annotation.*; import org.springframework.web.multipart.MultipartFile; import org.springframework.security.core.Authentication; import org.springframework.security.crypto.password.PasswordEncoder; import org.springframework.http.*;
+@Controller public class AppController {
+ final UserRepository ur; final StoredFileRepository fr; final PasswordEncoder pe; final FileService fs;
+ public AppController(UserRepository u,StoredFileRepository f,PasswordEncoder p,FileService s){ur=u;fr=f;pe=p;fs=s;}
+ @GetMapping("/login") String login(){return "login";}
+ @GetMapping("/register") String reg(){return "register";}
+ @PostMapping("/register") String register(@RequestParam String username,@RequestParam String password,Model m){if(username.length()<3||password.length()<6){m.addAttribute("error","Username must be 3+ characters and password 6+ characters.");return "register";}if(ur.existsByUsername(username)){m.addAttribute("error","Username already exists.");return "register";}ur.save(new User(username,pe.encode(password),"USER"));return "redirect:/login?registered";}
+ @GetMapping({"/","/dashboard"}) String dash(Model m,Authentication a){m.addAttribute("files",fs.list(a.getName()));m.addAttribute("username",a.getName());return "dashboard";}
+ @PostMapping("/files/upload") String upload(@RequestParam MultipartFile file,Authentication a,Model m){try{fs.save(file,a.getName());return "redirect:/dashboard?uploaded";}catch(Exception e){m.addAttribute("error",e.getMessage());m.addAttribute("files",fs.list(a.getName()));m.addAttribute("username",a.getName());return "dashboard";}}
+ @GetMapping("/files/download/{id}") ResponseEntity<byte[]> download(@PathVariable long id,Authentication a)throws Exception{StoredFile f=fs.find(id,a.getName());return ResponseEntity.ok().contentType(MediaType.parseMediaType(f.getContentType()==null?"application/octet-stream":f.getContentType())).header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename(f.getOriginalName()).build().toString()).body(fs.read(f));}
+ @PostMapping("/files/delete/{id}") String delete(@PathVariable long id,Authentication a)throws Exception{fs.delete(fs.find(id,a.getName()));return "redirect:/dashboard?deleted";}
+ @GetMapping("/admin") String admin(Model m,Authentication a){m.addAttribute("users",ur.findAll());m.addAttribute("files",fr.findAll());return "admin";}
+}
