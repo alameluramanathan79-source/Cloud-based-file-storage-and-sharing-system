@@ -110,7 +110,7 @@ This project was developed as part of **Cloud Computing coursework** to explore 
 
 ## 👩‍💻 Author
 
-**Your Name**
+Alamelu R
 
 GitHub:alameluramanathan79-source
 
